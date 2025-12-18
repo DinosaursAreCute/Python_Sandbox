@@ -72,7 +72,7 @@ def check_file_exists(file_path) -> bool:
         return False
     return True
 
-def delete_file(file_path) -> bool:
+def remove_file(file_path) -> bool:
     file_path = file_path if isinstance(file_path, Path) else Path(file_path)
     log.info(f"Trying to remove file: {file_path}")
     try:
@@ -106,7 +106,6 @@ def create_file(file_path,replace_existing: bool = False)-> bool :
 def _transfer_file(source_file_path, target_file_path, operation: str,
                    replace_existing_target_file: bool = False,
                    create_file_if_not_exist: bool = False) -> bool:
-
     source = source_file_path if isinstance(source_file_path, Path) else Path(source_file_path)
     target = target_file_path if isinstance(target_file_path, Path) else Path(target_file_path)
     log.info(f"Attempting to {operation} file: {source} -> {target}")
@@ -160,7 +159,7 @@ def _transfer_file(source_file_path, target_file_path, operation: str,
         if not target.exists():
             log.error(f"Copy failed: target does not exist after copy: {target}")
             return False
-    log.success(f"Successfully {operation}d file: {source} -> {target}")
+    log.success(f"Successful {operation} of file: {source} -> {target}")
     return True
 
 
@@ -174,3 +173,28 @@ def copy_file(source_file_path, target_file_path, replace_existing_target_file: 
               create_file_if_not_exist: bool = False) -> bool:
     return _transfer_file(source_file_path, target_file_path, "copy",
                           replace_existing_target_file, create_file_if_not_exist)
+
+def rename_file(file_path,name: str,replace_existing_file: bool = False) -> bool:
+    file_path = file_path if isinstance(file_path, Path) else Path(file_path)
+    new_path = file_path.parent / name
+    log.info(f"Attempting to rename: {file_path} -> {new_path}")
+    if not file_path.exists():
+        log.error(f"File: {file_path} does not exist.")
+        return False
+    if file_path.is_dir():
+        log.error(f"Path: {file_path} is a directory and cannot be renamed as a file.")
+        return False
+    if new_path.exists():
+        if not replace_existing_file:
+            log.error(f"Target file already exists: {new_path}")
+            return False
+        log.info(f"File with the same name already exists: {new_path}, file will be replaced")
+        if not remove_file(new_path):
+            log.error(f"Cannot rename file: {new_path} due to error during deletion of the existing file with the same name.")
+    try:
+        file_path.rename(new_path)
+    except Exception as e:
+        log.error(f"Failed to rename file: {file_path} to {new_path} due to: {e}")
+        return False
+    log.success(f"Successfully renamed file: {file_path} to {new_path}")
+    return True

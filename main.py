@@ -20,3 +20,4 @@ if __name__ == "__main__":
 
     fOps.move_file(path,f"Test/{path.parts[-1]}",True,True)
     fOps.copy_file(target_path,path,False,False)
+    fOps.rename_file(path,"Test_3_file.txt",True)
