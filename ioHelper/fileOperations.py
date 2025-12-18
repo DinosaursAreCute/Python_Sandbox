@@ -1,4 +1,3 @@
-import logging
 from pathlib import *
 import shutil
 import Utils.Logger
@@ -9,14 +8,30 @@ log = Utils.Logger.LoggerClass(logger_name="FileOperationsLogger",logger_level =
 
 # ======================== Common Utils ========================
 
-def convert_string_to_path(target_path):
-    log.debug(f"Converting {target_path} to Path object")
-    return Path(target_path)
+def convert_string_to_path(path: str):
+    """Convert a filesystem path string to a pathlib.Path object.
+
+    Args:
+        path (str): Path string to convert.
+
+    Returns:
+        pathlib.Path: Path object representing the given path.
+    """
+    log.debug(f"Converting {path} to Path object")
+    return Path(path)
 
 
 # ======================== Directory Utils ========================#
 
-def check_is_directory(target_directory):
+def check_is_directory(target_directory: Path)-> bool:
+    """Return True if the provided path exists and is a directory.
+
+    Args:
+        target_directory (pathlib.Path): The path to validate.
+
+    Returns:
+        bool: True if the path exists and is a directory, False otherwise.
+    """
     is_dir= target_directory.is_dir()
     log.debug(f"{target_directory} is directory = {is_dir}")
     if not is_dir:
@@ -25,7 +40,15 @@ def check_is_directory(target_directory):
     return True
 
 
-def check_directory_exists(target_directory):
+def check_directory_exists(target_directory: Path):
+    """Return True if the provided directory path exists.
+
+    Args:
+        target_directory (pathlib.Path): Directory path to check.
+
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
     if not target_directory.exists():
         log.debug(f"target directory does not exist. Target directory: ({target_directory})")
         return False
@@ -33,6 +56,20 @@ def check_directory_exists(target_directory):
 
 
 def list_subdirectories(root_path,recursive: bool = False):
+    """List subdirectories under a root path.
+
+    This function accepts either a Path or a string for `root_path`. If the
+    path does not exist or is not a directory an empty list is returned.
+
+    Args:
+        root_path (str | pathlib.Path): Root path to search for subdirectories.
+        recursive (bool): If True, include nested subdirectories (default False).
+
+    Returns:
+        list[pathlib.Path]: List of Path objects pointing to directories found
+            under `root_path`. Returns an empty list when `root_path` is
+            invalid.
+    """
     root = root_path if isinstance(root_path, Path) else Path(root_path)
     if not root.exists():
         log.debug(f"search path does not exist: {root}")
@@ -52,6 +89,15 @@ def list_subdirectories(root_path,recursive: bool = False):
 # ======================== File Utils ========================
 
 def list_files(root_path):
+    """List non-directory entries directly under `root_path`.
+
+    Args:
+        root_path (str | pathlib.Path): Directory to list files from.
+
+    Returns:
+        list[pathlib.Path]: List of file Path objects. Returns an empty list if
+            `root_path` does not exist or is not a directory.
+    """
     root = root_path if isinstance(root_path,Path) else Path(root_path)
     if not root.exists():
         log.debug(f"search path does not exist: {root}")
@@ -63,6 +109,15 @@ def list_files(root_path):
     return files
 
 def check_file_exists(file_path) -> bool:
+    """Return True when `file_path` exists and is a file (not a directory).
+
+    Args:
+        file_path (str | pathlib.Path): Path to the file to validate.
+
+    Returns:
+        bool: True if the path exists and refers to a regular file; False
+            otherwise.
+    """
     file_path = file_path if isinstance(file_path, Path) else Path(file_path)
     if not file_path.exists():
         log.debug(f"File does not exist at path: {file_path}")
@@ -73,6 +128,18 @@ def check_file_exists(file_path) -> bool:
     return True
 
 def remove_file(file_path) -> bool:
+    """Delete the file at `file_path`.
+
+    Args:
+        file_path (str | pathlib.Path): Path to the file to remove.
+
+    Returns:
+        bool: True if the file was removed successfully; False otherwise.
+
+    Notes:
+        - If the file does not exist, the function logs an error and returns
+          False. FileNotFoundError is handled internally.
+    """
     file_path = file_path if isinstance(file_path, Path) else Path(file_path)
     log.info(f"Trying to remove file: {file_path}")
     try:
@@ -88,6 +155,17 @@ def remove_file(file_path) -> bool:
         return False
 
 def create_file(file_path,replace_existing: bool = False)-> bool :
+    """Create an empty file at `file_path` (like `touch`).
+
+    Args:
+        file_path (str | pathlib.Path): Path where the file should be created.
+        replace_existing (bool): If True, overwrite an existing file by
+            touching it again; otherwise return False when the file exists.
+
+    Returns:
+        bool: True if the file was created (or replaced) successfully; False
+            on error.
+    """
     file_path = file_path if isinstance(file_path, Path) else Path(file_path)
     log.info(f"Trying to create file: {file_path}")
     if file_path.exists() and not replace_existing:
@@ -106,6 +184,24 @@ def create_file(file_path,replace_existing: bool = False)-> bool :
 def _transfer_file(source_file_path, target_file_path, operation: str,
                    replace_existing_target_file: bool = False,
                    create_file_if_not_exist: bool = False) -> bool:
+    """Internal helper to move or copy files with shared validation.
+
+    This centralizes common checks (existence, directory checks, parent
+    directory creation) and dispatches to shutil.move or shutil.copy2.
+
+    Args:
+        source_file_path (str | pathlib.Path): Source file path.
+        target_file_path (str | pathlib.Path): Destination file path.
+        operation (str): Either "move" or "copy".
+        replace_existing_target_file (bool): If True and the target exists,
+            it will be removed before the operation.
+        create_file_if_not_exist (bool): If True and the source does not
+            exist, an empty target file will be created (uses
+            `create_file`) and the function returns True.
+
+    Returns:
+        bool: True on success, False on failure.
+    """
     source = source_file_path if isinstance(source_file_path, Path) else Path(source_file_path)
     target = target_file_path if isinstance(target_file_path, Path) else Path(target_file_path)
     log.info(f"Attempting to {operation} file: {source} -> {target}")
@@ -165,16 +261,56 @@ def _transfer_file(source_file_path, target_file_path, operation: str,
 
 def move_file(source_file_path, target_file_path, replace_existing_target_file: bool = False,
               create_file_if_not_exist: bool = False) -> bool:
+    """Move a file from source to target using shared validation logic.
+
+    Thin wrapper around :func:`_transfer_file`.
+
+    Args:
+        source_file_path (str | pathlib.Path): File to move.
+        target_file_path (str | pathlib.Path): Destination path.
+        replace_existing_target_file (bool): If True allow overwriting target.
+        create_file_if_not_exist (bool): If True create the target if source
+            is missing (see _transfer_file behavior).
+
+    Returns:
+        bool: True on success, False on failure.
+    """
     return _transfer_file(source_file_path, target_file_path, "move",
                           replace_existing_target_file, create_file_if_not_exist)
 
 
 def copy_file(source_file_path, target_file_path, replace_existing_target_file: bool = False,
               create_file_if_not_exist: bool = False) -> bool:
+    """Copy a file from source to target using shared validation logic.
+
+    Thin wrapper around :func:`_transfer_file`.
+
+    Args:
+        source_file_path (str | pathlib.Path): File to copy.
+        target_file_path (str | pathlib.Path): Destination path.
+        replace_existing_target_file (bool): If True allow overwriting target.
+        create_file_if_not_exist (bool): If True create the target if source
+            is missing (see _transfer_file behavior).
+
+    Returns:
+        bool: True on success, False on failure.
+    """
     return _transfer_file(source_file_path, target_file_path, "copy",
                           replace_existing_target_file, create_file_if_not_exist)
 
 def rename_file(file_path,name: str,replace_existing_file: bool = False) -> bool:
+    """Rename a file to a new name within the same directory.
+
+    Args:
+        file_path (str | pathlib.Path): Path to the existing file to rename.
+        name (str): New filename (not a full path). The file will be moved to
+            the same parent directory under this name.
+        replace_existing_file (bool): If True and a file with the target name
+            already exists it will be removed before renaming.
+
+    Returns:
+        bool: True on success, False on failure.
+    """
     file_path = file_path if isinstance(file_path, Path) else Path(file_path)
     new_path = file_path.parent / name
     log.info(f"Attempting to rename: {file_path} -> {new_path}")
@@ -191,6 +327,7 @@ def rename_file(file_path,name: str,replace_existing_file: bool = False) -> bool
         log.info(f"File with the same name already exists: {new_path}, file will be replaced")
         if not remove_file(new_path):
             log.error(f"Cannot rename file: {new_path} due to error during deletion of the existing file with the same name.")
+            return False
     try:
         file_path.rename(new_path)
     except Exception as e:
@@ -198,3 +335,7 @@ def rename_file(file_path,name: str,replace_existing_file: bool = False) -> bool
         return False
     log.success(f"Successfully renamed file: {file_path} to {new_path}")
     return True
+
+
+if __name__ == "__main__":
+    print(list_subdirectories(Path("a")).__doc__)
