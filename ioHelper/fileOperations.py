@@ -62,7 +62,7 @@ def list_files(root_path):
     log.debug(f"found {len(files)} files under {root}")
     return files
 
-def check_file_exists(file_path: Path):
+def check_file_exists(file_path: Path) -> bool:
     if not file_path.exists():
         log.debug(f"File does not exist at path: {file_path}")
         return False
@@ -70,3 +70,18 @@ def check_file_exists(file_path: Path):
         log.debug(f"Requested file is a directory: {file_path}")
         return False
     return True
+
+def delete_file(file_path) -> bool:
+    file_path = file_path if isinstance(file_path,Path) else Path(file_path)
+    log.debug(f"Trying to remove file: {file_path}")
+    try:
+        file_path.unlink()
+    except FileNotFoundError:
+        log.warning(f"Tried to remove file: {file_path} but file does not exist")
+        return False
+    if not file_path.exists():
+        log.success(f"Successfully removed {file_path}")
+        return True
+    else:
+        log.error(f"Failed to remove file: {file_path}")
+        return False
