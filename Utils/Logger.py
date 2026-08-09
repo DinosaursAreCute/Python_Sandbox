@@ -157,7 +157,7 @@ class LoggerClass:
         if not self.prevent_color and log_color:
             levels = [color.Fore.RESET + ' DEBUG ' + color.Fore.RESET,
                       color.Fore.MAGENTA + ' VALUE ' + color.Fore.RESET,
-                      color.Fore.CYAN + ' INFO ' + color.Fore.RESET,
+                      color.Fore.CYAN + ' INFO  ' + color.Fore.RESET,
                       color.Fore.LIGHTGREEN_EX + 'SUCCESS' + color.Fore.RESET,
                       color.Fore.YELLOW + 'WARNING' + color.Fore.RESET,
                       color.Fore.LIGHTRED_EX + color.Style.BRIGHT + ' ERROR ' + color.Style.RESET_ALL,
@@ -174,9 +174,10 @@ class LoggerClass:
         elif log_time:
             parts.append(f"[{time.strftime('%H:%M:%S')}.{time.microsecond // 1000:03d}]")
         if log_name:
-            parts.append(f"[{self.logger_name}]")
+            lname=f"{self.logger_name}"
+            parts.append(f"[{lname:<20}]")
         if log_function:
-            parts.append(f"[{self._get_caller_name()}]")
+            parts.append(f"[{self._get_caller_name():<15}]")
         if log_level:
             parts.append(f"[{levels[message_log_level]}]")
         return f"{' '.join(parts)}; "
